@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { radius, space, type RoomView } from '@/shared';
+import { space, type RoomView } from '@/shared';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { toastError } from '@/components/ui/toast';
 import { useRoom } from '@/store/room';
@@ -52,7 +53,7 @@ export function Results({ room }: { room: RoomView }) {
           </Text>
         </Animated.View>
 
-        <View style={[styles.list, { borderColor: c.line }]}>
+        <Card style={styles.list}>
           {result.standings.map((s, i) => {
             const p = room.players.find((x) => x.id === s.player);
             const mp = match.players.find((x) => x.id === s.player);
@@ -81,12 +82,12 @@ export function Results({ room }: { room: RoomView }) {
               </Animated.View>
             );
           })}
-        </View>
+        </Card>
       </ScrollView>
-      <View style={[styles.footer, { borderTopColor: c.line }]}>
+      <View style={styles.footer}>
         {isHost ? (
           <>
-            <Button label="Play again" variant="accent" loading={busy} onPress={run(start)} />
+            <Button label="Play again" variant="primary" loading={busy} onPress={run(start)} />
             <Button label="Back to lobby" variant="secondary" disabled={busy} onPress={run(backToLobby)} />
           </>
         ) : (
@@ -103,13 +104,12 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   body: { padding: space.lg, gap: space.xl, width: '100%', maxWidth: 520, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: space.sm, paddingVertical: space.xl },
-  list: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radius.lg, overflow: 'hidden' },
+  list: { overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
   who: { flex: 1, gap: 2 },
   footer: {
     padding: space.lg,
     gap: space.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
     width: '100%',
     maxWidth: 520,
     alignSelf: 'center',

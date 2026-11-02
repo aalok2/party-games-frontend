@@ -1,115 +1,144 @@
+// First screen: choose what to play. Name and room come next; people with a code can skip ahead.
+
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, ImageBackground, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { NAME_MAX_LENGTH, ROOM_CODE_LENGTH, space } from '@/shared';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { radius, space } from '@/shared';
+import { GameCard } from '@/components/games/game-card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Screen } from '@/components/ui/screen';
+import { Card } from '@/components/ui/card';
+import { Cover } from '@/components/ui/cover';
 import { Text } from '@/components/ui/text';
 import { toastError } from '@/components/ui/toast';
-import { storage } from '@/lib/storage';
+import { heroArt } from '@/lib/art';
 import { useRoom } from '@/store/room';
 import { easeOut } from '@/theme/motion';
-import { fonts, useColors } from '@/theme/theme';
+import { useColors, useScheme } from '@/theme/theme';
 
 const enter = (i: number) => FadeInDown.duration(280).delay(i * 50).easing(easeOut);
 
-export default function Home() {
+export default function PickGame() {
   const router = useRouter();
   const c = useColors();
-  const { create, connection } = useRoom();
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState<'create' | null>(null);
+  const scheme = useScheme();
+  const insets = useSafeAreaInsets();
+  const { games, loadGames, connection } = useRoom();
+  const [picked, setPicked] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    storage.getName().then((n) => n && setName(n));
-  }, []);
-
-  const named = name.trim().length > 0;
-  const codeReady = code.length === ROOM_CODE_LENGTH;
-
-  const onCreate = async () => {
-    setBusy('create');
-    try {
-      const roomCode = await create(name.trim());
-      router.push(`/room/${roomCode}`);
-    } catch (e) {
+  const load = useCallback(() => {
+    loadGames().catch((e) => {
+      setFailed(true);
       toastError(e);
-    } finally {
-      setBusy(null);
-    }
-  };
+    });
+  }, [loadGames]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const onJoin = async () => {
-    if (named) await storage.setName(name.trim());
-    router.push(`/room/${code}`);
-  };
+  const current = picked ?? games[0]?.id ?? null;
+  const chosen = games.find((g) => g.id === current);
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen contentStyle={styles.content}>
-        <Animated.View entering={enter(0)} style={styles.hero}>
-          <Text variant="label" tone="accent">
-            Party games
-          </Text>
-          <Text variant="hero">Game night,{'\n'}sorted.</Text>
-          <Text variant="lead" tone="muted">
-            Mafia, Imposter and more. The app runs the game; you bring the drama.
-          </Text>
+    <View style={[styles.fill, { backgroundColor: c.bg }]}>
+      <ScrollView style={styles.fill} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Animated.View entering={enter(0)}>
+          <ImageBackground source={heroArt(scheme)} resizeMode="cover" style={[styles.hero, { paddingTop: insets.top + 40 }]}>
+            <View style={styles.column}>
+              <Text variant="hero" style={styles.headline}>
+                Everyone here
+              </Text>
+              <View style={styles.secretRow}>
+                <Text variant="hero" style={styles.headline}>
+                  has a{' '}
+                </Text>
+                <Cover label="The secret word" padding={12}>
+                  <Text variant="hero" style={styles.headline}>
+                    secret
+                  </Text>
+                </Cover>
+                <Text variant="hero" style={styles.headline}>
+                  .
+                </Text>
+              </View>
+            </View>
+          </ImageBackground>
         </Animated.View>
 
-        {connection === 'outdated' && (
-          <View style={[styles.notice, { backgroundColor: c.raised }]}>
-            <Text variant="strong">Update the app to keep playing</Text>
-            <Text tone="muted">This version can’t talk to the game server any more.</Text>
-          </View>
-        )}
-
-        <Animated.View entering={enter(1)} style={styles.block}>
-          <Text variant="label" tone="muted">
-            Your name
+        <View style={[styles.column, styles.list]}>
+          {connection === 'outdated' && (
+            <Card radiusSize="md" style={styles.notice}>
+              <Text variant="strong">Update the app to keep playing</Text>
+              <Text tone="muted">This version can’t talk to the game server any more.</Text>
+            </Card>
+          )}
+          <Text variant="title" style={styles.heading}>
+            What are we playing?
           </Text>
-          <Input
-            value={name}
-            onChangeText={setName}
-            maxLength={NAME_MAX_LENGTH}
-            placeholder="What your friends call you"
-            autoCapitalize="words"
-            returnKeyType="done"
+          {games.length === 0 ? (
+            failed ? (
+              <View style={styles.status}>
+                <Text tone="muted" align="center">
+                  Couldn’t load the games.
+                </Text>
+                <Button
+                  label="Try again"
+                  variant="secondary"
+                  size="md"
+                  onPress={() => {
+                    setFailed(false);
+                    load();
+                  }}
+                />
+              </View>
+            ) : (
+              <View style={styles.status}>
+                <ActivityIndicator color={c.muted} />
+              </View>
+            )
+          ) : (
+            games.map((g, i) => (
+              <Animated.View key={g.id} entering={enter(i + 1)}>
+                <GameCard game={g} selected={g.id === current} onPress={() => setPicked(g.id)} />
+              </Animated.View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.lg) }]}>
+        <View style={styles.column}>
+          <Button
+            label={chosen ? `Play ${chosen.name}` : 'Play'}
+            variant="primary"
+            disabled={!chosen}
+            onPress={() => chosen && router.push({ pathname: '/new', params: { game: chosen.id } })}
           />
-          <Button label="Create a room" variant="accent" disabled={!named} loading={busy === 'create'} onPress={onCreate} />
-        </Animated.View>
-
-        <Animated.View entering={enter(2)} style={styles.block}>
-          <Text variant="label" tone="muted">
-            Got a code?
-          </Text>
-          <View style={styles.joinRow}>
-            <Input
-              value={code}
-              onChangeText={(t) => setCode(t.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, ROOM_CODE_LENGTH))}
-              placeholder="ABCDE"
-              autoCapitalize="characters"
-              autoCorrect={false}
-              returnKeyType="go"
-              onSubmitEditing={() => codeReady && onJoin()}
-              style={[styles.codeInput, { fontFamily: fonts.semibold }]}
-            />
-            <Button label="Join" variant="primary" disabled={!codeReady} onPress={onJoin} style={{ minWidth: 96 }} />
-          </View>
-        </Animated.View>
-      </Screen>
-    </KeyboardAvoidingView>
+          <Button label="Have a code? Join a room" variant="ghost" onPress={() => router.push('/join')} />
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { justifyContent: 'center', gap: space.xxl, paddingVertical: space.xxl },
-  hero: { gap: space.md },
-  block: { gap: space.sm },
-  joinRow: { flexDirection: 'row', gap: space.sm },
-  codeInput: { flex: 1, letterSpacing: 6 },
-  notice: { borderRadius: 14, padding: space.lg, gap: 2 },
+  fill: { flex: 1 },
+  scroll: { flexGrow: 1, paddingBottom: space.lg },
+  hero: {
+    paddingHorizontal: space.xl,
+    paddingBottom: 72,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  column: { width: '100%', maxWidth: 520, alignSelf: 'center' },
+  headline: { fontSize: 40, lineHeight: 44, letterSpacing: -1.8 },
+  secretRow: { flexDirection: 'row', alignItems: 'center' },
+  list: { paddingHorizontal: space.lg, gap: space.lg, marginTop: space.xl },
+  heading: { paddingHorizontal: 4 },
+  notice: { padding: space.lg, gap: 2 },
+  status: { alignItems: 'center', gap: space.md, paddingVertical: space.xxl },
+  footer: { paddingHorizontal: space.lg, paddingTop: space.md, gap: space.sm },
 });

@@ -34,10 +34,10 @@ export function RoleCard({ me, players, compact }: { me: MatchView['me']; player
         hint={detail}
         front={(c) => (
           <View style={styles.bar}>
-            <Text variant="label" style={{ color: c.bg, opacity: 0.6 }}>
+            <Text variant="label" style={{ color: c.inkFg, opacity: 0.6 }}>
               Your role
             </Text>
-            <Text variant="strong" style={{ color: c.bg }}>
+            <Text variant="strong" style={{ color: c.inkFg }}>
               Hold to peek
             </Text>
           </View>
@@ -65,14 +65,14 @@ export function RoleCard({ me, players, compact }: { me: MatchView['me']; player
       hint={role ? `Your role is ${role.name}` : undefined}
       front={(c) => (
         <>
-          <View style={[styles.pattern, { borderColor: c.bg }]} />
-          <Text variant="label" style={{ color: c.bg, opacity: 0.6 }}>
+          <View style={[styles.pattern, { borderColor: c.inkFg }]} />
+          <Text variant="label" style={{ color: c.inkFg, opacity: 0.6 }}>
             Your role
           </Text>
-          <Text variant="title" align="center" style={{ color: c.bg }}>
+          <Text variant="title" align="center" style={{ color: c.inkFg }}>
             Hold to reveal
           </Text>
-          <Text variant="caption" align="center" style={{ color: c.bg, opacity: 0.6 }}>
+          <Text variant="caption" align="center" style={{ color: c.inkFg, opacity: 0.6 }}>
             Keep it hidden from the others
           </Text>
         </>
@@ -162,8 +162,8 @@ function Flip({ height, label, hint, front, back }: { height: number; label: str
       accessibilityHint={hint}
       style={{ height }}
     >
-      <Animated.View style={[face, { backgroundColor: c.fg }, frontStyle]}>{front(c)}</Animated.View>
-      <Animated.View style={[face, styles.back, { backgroundColor: c.surface, borderColor: c.line }, backStyle]}>
+      <Animated.View style={[face, { backgroundColor: c.ink }, frontStyle]}>{front(c)}</Animated.View>
+      <Animated.View style={[face, styles.back, { backgroundColor: c.surface, borderColor: c.line, shadowColor: c.shadow }, backStyle]}>
         {back(c)}
       </Animated.View>
     </PressableScale>
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   face: { ...StyleSheet.absoluteFill, backfaceVisibility: 'hidden', overflow: 'hidden' },
   faceFull: { borderRadius: radius.xl, alignItems: 'center', justifyContent: 'center', gap: space.sm, padding: space.xl },
   faceCompact: { borderRadius: radius.lg, justifyContent: 'center', paddingHorizontal: space.lg },
-  back: { borderWidth: StyleSheet.hairlineWidth * 2 },
+  back: { borderWidth: StyleSheet.hairlineWidth * 2, shadowOpacity: 0.14, shadowRadius: 22, shadowOffset: { width: 0, height: 10 } },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   pattern: {
     position: 'absolute',

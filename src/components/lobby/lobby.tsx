@@ -1,11 +1,14 @@
 import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
-import { radius, space, type GameSetting, type GameSummary, type RoomView, type SettingValue } from '@/shared';
+import { radius, space, type GameSetting, type RoomView, type SettingValue } from '@/shared';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Segmented, Stepper, Toggle } from '@/components/ui/controls';
+import { CoverPill } from '@/components/ui/cover';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -19,6 +22,7 @@ const layout = LinearTransition.duration(220).easing(easeOut);
 
 export function Lobby({ room, onLeave }: { room: RoomView; onLeave(): void }) {
   const c = useColors();
+  const router = useRouter();
   const { games, loadGames, configure, start, kick } = useRoom();
   const [starting, setStarting] = useState(false);
   const isHost = room.hostId === room.me;
@@ -56,7 +60,7 @@ export function Lobby({ room, onLeave }: { room: RoomView; onLeave(): void }) {
         isHost ? (
           <Button
             label={blocker ?? `Start ${game?.name}`}
-            variant="accent"
+            variant="primary"
             disabled={!!blocker}
             loading={starting}
             onPress={async () => {
@@ -72,72 +76,81 @@ export function Lobby({ room, onLeave }: { room: RoomView; onLeave(): void }) {
         )
       }
     >
-      <View style={styles.top}>
-        <Button label="Leave" variant="ghost" size="md" onPress={onLeave} style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }} />
-        <PressableScale
-          haptics="select"
-          onPress={async () => {
-            await Clipboard.setStringAsync(room.code);
-            toast('Room code copied');
-          }}
-          accessibilityLabel={`Room code ${room.code.split('').join(' ')}. Tap to copy.`}
-          style={[styles.code, { borderColor: c.line, backgroundColor: c.surface }]}
-        >
-          <Text variant="label" tone="muted">
-            Room code
-          </Text>
-          <Text style={[styles.codeText, { color: c.fg }]}>{room.code}</Text>
-        </PressableScale>
-        <Button label="Invite friends" variant="secondary" onPress={invite} />
+      <View style={styles.bar}>
+        <Button label="Leave" variant="ghost" size="md" onPress={onLeave} style={styles.leave} />
+        <Button label="Invite friends" variant="secondary" size="md" onPress={invite} />
       </View>
 
-      <Section title={`Players · ${present}`}>
-        <Animated.View layout={layout} style={styles.players}>
-          {room.players.map((p) => (
-            <Animated.View
-              key={p.id}
-              entering={FadeIn.duration(200).easing(easeOut)}
-              exiting={FadeOut.duration(150)}
-              layout={layout}
-              style={styles.player}
-            >
-              <Avatar name={p.name} tone={p.tone} size={36} dimmed={!p.connected} />
-              <View style={{ flex: 1 }}>
-                <Text variant="strong">
-                  {p.name}
-                  {p.id === room.me ? ' (you)' : ''}
-                </Text>
-                {(p.isHost || !p.connected) && (
-                  <Text variant="caption" tone="muted">
-                    {p.isHost ? 'Host' : 'Reconnecting…'}
+      <PressableScale
+        haptics="select"
+        onPress={async () => {
+          await Clipboard.setStringAsync(room.code);
+          toast('Room code copied');
+        }}
+        accessibilityLabel={`Room code ${room.code.split('').join(' ')}. Tap to copy.`}
+        style={[styles.code, { backgroundColor: c.inset }]}
+      >
+        <Text variant="label" tone="muted">
+          Room code. Tap to copy
+        </Text>
+        <Text style={[styles.codeText, { color: c.fg }]}>{room.code}</Text>
+      </PressableScale>
+
+      <Section title="Players" note={`${present} here`}>
+        <Card>
+          <Animated.View layout={layout}>
+            {room.players.map((p, i) => (
+              <Animated.View
+                key={p.id}
+                entering={FadeIn.duration(200).easing(easeOut)}
+                exiting={FadeOut.duration(150)}
+                layout={layout}
+                style={[styles.player, i > 0 && { borderTopColor: c.line, borderTopWidth: StyleSheet.hairlineWidth * 2 }]}
+              >
+                <Avatar name={p.name} tone={p.tone} size={38} dimmed={!p.connected} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="strong">
+                    {p.name}
+                    {p.id === room.me ? ' (you)' : ''}
                   </Text>
-                )}
-              </View>
-              {isHost && p.id !== room.me && (
-                <Button label="Remove" variant="ghost" size="md" onPress={() => kick(p.id).catch(toastError)} />
-              )}
-            </Animated.View>
-          ))}
-        </Animated.View>
+                  {p.isHost || !p.connected ? (
+                    <Text variant="caption" tone={p.isHost ? 'accent' : 'muted'}>
+                      {p.isHost ? 'Host' : 'Reconnecting…'}
+                    </Text>
+                  ) : isHost && p.id !== room.me ? (
+                    <PressableScale haptics="none" onPress={() => kick(p.id).catch(toastError)} accessibilityLabel={`Remove ${p.name}`} hitSlop={8}>
+                      <Text variant="caption" tone="muted">
+                        Remove
+                      </Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
+                {p.connected && <CoverPill />}
+              </Animated.View>
+            ))}
+          </Animated.View>
+        </Card>
       </Section>
 
       <Section title="Game">
-        <View style={styles.games}>
-          {games.map((g) => (
-            <GameCard
-              key={g.id}
-              game={g}
-              selected={g.id === room.gameId}
-              disabled={!isHost}
-              onPress={() => configure({ gameId: g.id }).catch(toastError)}
-            />
-          ))}
-        </View>
+        <Card radiusSize="xl" style={styles.gameRow}>
+          <View style={{ flex: 1 }}>
+            <Text variant="title">{game?.name ?? '…'}</Text>
+            {game && (
+              <Text variant="caption" tone="muted">
+                {game.players.min}–{game.players.max} players  {game.minutes[0]}–{game.minutes[1]} min
+              </Text>
+            )}
+          </View>
+          {isHost && (
+            <Button label="Change" variant="primary" size="md" onPress={() => router.push('/games')} />
+          )}
+        </Card>
       </Section>
 
       {game && game.settings.length > 0 && (
         <Section title="House rules">
-          <View style={[styles.settings, { borderColor: c.line }]}>
+          <Card style={styles.settings}>
             {game.settings.map((s, i) => (
               <SettingRow
                 key={s.key}
@@ -148,45 +161,26 @@ export function Lobby({ room, onLeave }: { room: RoomView; onLeave(): void }) {
                 onChange={(v) => setSetting(s.key, v)}
               />
             ))}
-          </View>
+          </Card>
         </Section>
       )}
     </Screen>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <View style={{ gap: space.md }}>
-      <Text variant="label" tone="muted">
-        {title}
-      </Text>
+    <View style={{ gap: space.sm }}>
+      <View style={styles.sectionHead}>
+        <Text variant="title">{title}</Text>
+        {note ? (
+          <Text variant="caption" tone="muted">
+            {note}
+          </Text>
+        ) : null}
+      </View>
       {children}
     </View>
-  );
-}
-
-function GameCard({ game, selected, disabled, onPress }: { game: GameSummary; selected: boolean; disabled: boolean; onPress(): void }) {
-  const c = useColors();
-  return (
-    <PressableScale
-      haptics="select"
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityState={{ selected, disabled }}
-      style={[styles.game, { borderColor: selected ? c.fg : c.line, backgroundColor: c.surface }]}
-    >
-      <View style={styles.gameHead}>
-        <Text variant="title">{game.name}</Text>
-        <Text variant="label" tone={game.tier === 'free' ? 'success' : 'accent'}>
-          {game.tier === 'free' ? 'Free' : 'Pass'}
-        </Text>
-      </View>
-      <Text tone="muted">{game.tagline}</Text>
-      <Text variant="caption" tone="faint">
-        {game.players.min}–{game.players.max} players · {game.minutes[0]}–{game.minutes[1]} min
-      </Text>
-    </PressableScale>
   );
 }
 
@@ -205,7 +199,7 @@ function SettingRow({
 }) {
   const c = useColors();
   return (
-    <View style={[styles.setting, divider && { borderTopColor: c.line, borderTopWidth: StyleSheet.hairlineWidth }]}>
+    <View style={[styles.setting, divider && { borderTopColor: c.line, borderTopWidth: StyleSheet.hairlineWidth * 2 }]}>
       <Text variant="body" style={{ flex: 1 }}>
         {s.label}
       </Text>
@@ -221,14 +215,13 @@ function SettingRow({
 }
 
 const styles = StyleSheet.create({
-  top: { gap: space.md },
-  code: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radius.lg, paddingVertical: space.xl, alignItems: 'center', gap: space.xs },
-  codeText: { fontFamily: fonts.bold, fontSize: 44, lineHeight: 50, letterSpacing: 10, paddingLeft: 10 },
-  players: { gap: space.md },
-  player: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44 },
-  games: { gap: space.sm },
-  game: { borderWidth: 1.5, borderRadius: radius.lg, padding: space.lg, gap: space.xs },
-  gameHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  settings: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radius.lg, paddingHorizontal: space.lg },
+  bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  leave: { paddingHorizontal: 0 },
+  code: { borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center', gap: space.xs },
+  codeText: { fontFamily: fonts.bold, fontSize: 54, lineHeight: 60, letterSpacing: 8, paddingLeft: 8 },
+  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 4 },
+  player: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.lg },
+  gameRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingLeft: space.xl, paddingRight: space.md },
+  settings: { paddingHorizontal: space.lg },
   setting: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.sm },
 });

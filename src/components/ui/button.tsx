@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { radius } from '@/shared';
 import { useColors } from '@/theme/theme';
 import { PressableScale, type Haptic } from './pressable-scale';
@@ -6,6 +6,7 @@ import { Text } from './text';
 
 type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 
+/** Pill buttons. Primary is the glossy charcoal action; accent is reserved for the single "go" moment. */
 export function Button({
   label,
   onPress,
@@ -27,11 +28,11 @@ export function Button({
 }) {
   const c = useColors();
   const look = {
-    primary: { bg: c.fg, fg: c.bg, border: c.fg },
-    accent: { bg: c.accent, fg: c.accentFg, border: c.accent },
-    secondary: { bg: 'transparent', fg: c.fg, border: c.line },
-    ghost: { bg: 'transparent', fg: c.muted, border: 'transparent' },
-    danger: { bg: 'transparent', fg: c.danger, border: c.line },
+    primary: { bg: c.ink, fg: c.inkFg, raised: true },
+    accent: { bg: c.accent, fg: c.accentFg, raised: true },
+    secondary: { bg: c.surface, fg: c.fg, raised: true },
+    ghost: { bg: 'transparent', fg: c.muted, raised: false },
+    danger: { bg: 'transparent', fg: c.danger, raised: false },
   }[variant];
   const off = disabled || loading;
   return (
@@ -43,7 +44,8 @@ export function Button({
       style={[
         styles.base,
         size === 'md' && styles.md,
-        { backgroundColor: look.bg, borderColor: look.border, opacity: disabled ? 0.4 : 1 },
+        { backgroundColor: look.bg, opacity: disabled ? 0.45 : 1 },
+        look.raised && { shadowColor: c.shadow, shadowOpacity: Platform.OS === 'ios' ? 0.2 : 0, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: look.raised ? 2 : 0 },
         style,
       ]}
     >
@@ -56,12 +58,11 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 54,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    paddingHorizontal: 20,
+    minHeight: 56,
+    borderRadius: radius.pill,
+    paddingHorizontal: 24,
     justifyContent: 'center',
   },
-  md: { minHeight: 44, borderRadius: radius.sm, paddingHorizontal: 14 },
+  md: { minHeight: 44, paddingHorizontal: 18 },
   row: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
 });

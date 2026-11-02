@@ -82,7 +82,7 @@ function PlayerPicker({
             accessibilityState={{ selected: chosen }}
             style={[
               styles.tile,
-              { borderColor: chosen ? c.accent : c.line, backgroundColor: chosen ? c.raised : c.surface },
+              { borderColor: chosen ? c.accent : 'transparent', backgroundColor: c.surface, shadowColor: c.shadow },
             ]}
           >
             <Avatar name={p.name} tone={p.tone} size={36} />
@@ -142,8 +142,12 @@ const styles = StyleSheet.create({
     padding: space.sm,
     paddingRight: space.md,
     borderRadius: radius.md,
-    borderWidth: 1.5,
+    borderWidth: 2.5,
     minHeight: 56,
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
   },
   textRow: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
 });

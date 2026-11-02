@@ -27,7 +27,7 @@ export function Screen({
       ) : (
         body
       )}
-      {footer ? <View style={[styles.footer, { borderTopColor: c.line, backgroundColor: c.bg }]}>{footer}</View> : null}
+      {footer ? <View style={[styles.footer, { backgroundColor: c.bg }]}>{footer}</View> : null}
     </SafeAreaView>
   );
 }
@@ -35,7 +35,7 @@ export function Screen({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flexGrow: 1 },
-  content: { flexGrow: 1, width: '100%', maxWidth: 520, alignSelf: 'center', paddingHorizontal: space.lg, paddingTop: space.lg, gap: space.xl },
+  content: { flexGrow: 1, width: '100%', maxWidth: 520, alignSelf: 'center', paddingHorizontal: space.lg, paddingTop: space.lg, gap: space.lg },
   footer: {
     width: '100%',
     maxWidth: 520,
@@ -44,6 +44,5 @@ const styles = StyleSheet.create({
     paddingTop: space.md,
     paddingBottom: space.sm,
     gap: space.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });

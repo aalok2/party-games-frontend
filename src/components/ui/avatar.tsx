@@ -13,7 +13,7 @@ export function Avatar({ name, tone, size = 40, dimmed }: { name: string; tone: 
     <View
       style={[
         styles.dot,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: tones[tone % tones.length], opacity: dimmed ? 0.35 : 1 },
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: tones[tone % tones.length], opacity: dimmed ? 0.35 : 1, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' },
       ]}
     >
       <Text style={{ color: '#fff', fontFamily: fonts.semibold, fontSize: size * 0.38, lineHeight: size * 0.5 }}>

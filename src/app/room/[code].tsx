@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { NAME_MAX_LENGTH, ROOM_CODE_LENGTH, space } from '@/shared';
+import { NAME_MAX_LENGTH, ROOM_CODE_LENGTH, radius, space } from '@/shared';
 import { GameView } from '@/components/game/game-view';
 import { Lobby } from '@/components/lobby/lobby';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { toast, toastError } from '@/components/ui/toast';
 import { socket } from '@/lib/socket';
 import { storage } from '@/lib/storage';
 import { useRoom } from '@/store/room';
-import { useColors } from '@/theme/theme';
+import { fonts, useColors } from '@/theme/theme';
 
 export default function RoomScreen() {
   const params = useLocalSearchParams<{ code: string }>();
@@ -59,6 +59,7 @@ export default function RoomScreen() {
 }
 
 function JoinGate({ code, onJoin, onCancel }: { code: string; onJoin(code: string, name: string): Promise<void>; onCancel(): void }) {
+  const c = useColors();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -76,21 +77,22 @@ function JoinGate({ code, onJoin, onCancel }: { code: string; onJoin(code: strin
   };
   return (
     <Screen
-      contentStyle={{ justifyContent: 'center' }}
       footer={
         <>
-          <Button label="Join the room" variant="accent" disabled={!name.trim()} loading={busy} onPress={submit} />
+          <Button label="Join the room" variant="primary" disabled={!name.trim()} loading={busy} onPress={submit} />
           <Button label="Cancel" variant="ghost" onPress={onCancel} />
         </>
       }
     >
       <View style={{ gap: space.sm }}>
+        <Text variant="display">You’re joining a game</Text>
+        <Text tone="muted">Pick the name your friends will see.</Text>
+      </View>
+      <View style={[styles.codeWell, { backgroundColor: c.inset }]}>
         <Text variant="label" tone="muted">
-          Joining room
+          Room code
         </Text>
-        <Text variant="display" style={{ letterSpacing: 6 }}>
-          {code}
-        </Text>
+        <Text style={[styles.codeText, { color: c.fg }]}>{code}</Text>
       </View>
       <Input
         value={name}
@@ -117,8 +119,8 @@ function Loading() {
 function OfflineBadge() {
   const c = useColors();
   return (
-    <View pointerEvents="none" style={[styles.offline, { backgroundColor: c.fg }]}>
-      <Text variant="caption" style={{ color: c.bg }}>
+    <View pointerEvents="none" style={[styles.offline, { backgroundColor: c.ink }]}>
+      <Text variant="caption" style={{ color: c.inkFg }}>
         Reconnecting…
       </Text>
     </View>
@@ -126,6 +128,8 @@ function OfflineBadge() {
 }
 
 const styles = StyleSheet.create({
+  codeWell: { borderRadius: radius.lg, paddingVertical: space.lg, alignItems: 'center', gap: space.xs },
+  codeText: { fontFamily: fonts.bold, fontSize: 54, lineHeight: 60, letterSpacing: 8, paddingLeft: 8 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   offline: { position: 'absolute', top: 56, alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
 });
