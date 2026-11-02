@@ -68,8 +68,13 @@ export interface MatchView {
     id: string;
     title: string;
     ui: string | null;
-    /** Epoch ms; null when the phase waits for players without a timer. */
+    /** Epoch ms by the server's clock; null when the phase waits for players without a timer. */
     endsAt: number | null;
+    /**
+     * Time left when this view was sent. Use this (not endsAt) to draw timers:
+     * device clocks are often minutes off.
+     */
+    msLeft: number | null;
     durationMs: number | null;
     turn: { playerId: string; index: number; total: number } | null;
   };

@@ -76,7 +76,7 @@ function Playing({ room, match }: { room: RoomView; match: MatchView }) {
             <Text variant="display">{match.phase.title}</Text>
           </Animated.View>
         </View>
-        <TimerBar endsAt={match.phase.endsAt} durationMs={match.phase.durationMs} />
+        <TimerBar msLeft={match.phase.msLeft} durationMs={match.phase.durationMs} />
       </View>
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">

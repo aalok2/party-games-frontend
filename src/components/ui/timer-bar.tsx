@@ -3,24 +3,27 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useColors } from '@/theme/theme';
 
-/** Drains smoothly from the time left to zero. Time is linear; everything else eases. */
-export function TimerBar({ endsAt, durationMs }: { endsAt: number | null; durationMs: number | null }) {
+/**
+ * Drains smoothly from the time left to zero. Time is linear; everything else eases.
+ * Uses the server's msLeft rather than the device clock, which is often off.
+ */
+export function TimerBar({ msLeft, durationMs }: { msLeft: number | null; durationMs: number | null }) {
   const c = useColors();
   const progress = useSharedValue(1);
   useEffect(() => {
-    if (!endsAt || !durationMs) {
+    if (msLeft === null || !durationMs) {
       progress.set(1);
       return;
     }
-    const left = Math.max(0, endsAt - Date.now());
+    const left = msLeft;
     progress.set(left / durationMs);
     progress.set(withTiming(0, { duration: left, easing: Easing.linear }));
-  }, [endsAt, durationMs, progress]);
+  }, [msLeft, durationMs, progress]);
   const fill = useAnimatedStyle(() => ({
     transform: [{ scaleX: progress.get() }],
     backgroundColor: progress.get() < 0.2 ? c.danger : c.accent,
   }));
-  if (!endsAt) return <View style={[styles.track, { backgroundColor: 'transparent' }]} />;
+  if (msLeft === null) return <View style={[styles.track, { backgroundColor: 'transparent' }]} />;
   return (
     <View style={[styles.track, { backgroundColor: c.line }]}>
       <Animated.View style={[styles.fill, fill]} />
