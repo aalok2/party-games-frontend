@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Share, StyleSheet, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { radius, space, type GameSetting, type RoomView, type SettingValue } from '@/shared';
 import { Avatar } from '@/components/ui/avatar';
@@ -198,9 +198,10 @@ function SettingRow({
   onChange(v: SettingValue): void;
 }) {
   const c = useColors();
+  const stacked = s.type === 'choice';
   return (
-    <View style={[styles.setting, divider && { borderTopColor: c.line, borderTopWidth: StyleSheet.hairlineWidth * 2 }]}>
-      <Text variant="body" style={{ flex: 1 }}>
+    <View style={[styles.setting, stacked && styles.settingStacked, divider && { borderTopColor: c.line, borderTopWidth: StyleSheet.hairlineWidth * 2 }]}>
+      <Text variant="body" style={stacked ? undefined : { flex: 1 }}>
         {s.label}
       </Text>
       {s.type === 'number' && (
@@ -208,7 +209,9 @@ function SettingRow({
       )}
       {s.type === 'boolean' && <Toggle value={value === true} disabled={disabled} onChange={onChange} />}
       {s.type === 'choice' && s.options && (
-        <Segmented value={value as string | number} options={s.options} disabled={disabled} onChange={onChange} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.choiceScroll}>
+          <Segmented value={value as string | number} options={s.options} disabled={disabled} onChange={onChange} />
+        </ScrollView>
       )}
     </View>
   );
@@ -223,5 +226,7 @@ const styles = StyleSheet.create({
   player: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.lg },
   gameRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingLeft: space.xl, paddingRight: space.md },
   settings: { paddingHorizontal: space.lg },
+  settingStacked: { flexDirection: 'column', alignItems: 'stretch', gap: space.sm, paddingVertical: space.md },
+  choiceScroll: { flexGrow: 0 },
   setting: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.sm },
 });

@@ -20,7 +20,7 @@ export function Results({ room }: { room: RoomView }) {
   const isHost = room.hostId === room.me;
   const nameOf = (id: string) => room.players.find((p) => p.id === id)?.name ?? 'Someone';
   const won = result.winners.includes(room.me);
-  const showScores = match.totalRounds !== null;
+  const showScores = match.scored;
 
   const headline = result.team
     ? `${result.team.name} wins`
@@ -46,7 +46,7 @@ export function Results({ room }: { room: RoomView }) {
       <ScrollView contentContainerStyle={styles.body}>
         <Animated.View entering={FadeInDown.duration(280).easing(easeOut)} style={styles.hero}>
           <Text variant="label" tone={won ? 'accent' : 'muted'}>
-            {won ? 'You won' : 'Better luck next time'}
+            {!showScores ? 'That’s a wrap' : won ? 'You won' : 'Better luck next time'}
           </Text>
           <Text variant="hero" align="center">
             {headline}

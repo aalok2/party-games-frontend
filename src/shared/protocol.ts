@@ -64,6 +64,10 @@ export interface MatchView {
   gameId: string;
   round: number;
   totalRounds: number | null;
+  /** Whether points decide a winner. Quick-vote games just end. */
+  scored: boolean;
+  /** The round's shared content, e.g. the prompt or question, in the order the game lists it. */
+  content: { field: string; text: string }[] | null;
   phase: {
     id: string;
     title: string;
@@ -103,8 +107,10 @@ export interface Prompt {
   key: string;
   type: 'choose_player' | 'vote' | 'choose_option' | 'text' | 'ready';
   label: string;
-  /** Player ids for choose_player and vote; strings for choose_option. */
+  /** Player ids for choose_player and vote; strings for choose_option; answer tokens when `optionLabels` is set. */
   options: string[];
+  /** Voting on anonymous answers: option token to the answer's text. */
+  optionLabels: Record<string, string> | null;
   maxLength: number | null;
   submitted: string | null;
   /** In `agree` mode, what my teammates have picked so far. */
@@ -117,7 +123,15 @@ export type FeedEvent = { id: number; round: number; phase: string } & (
   | { kind: 'announce'; key: string; player: string | null; value: string | null }
   | { kind: 'text'; player: string; key: string; text: string }
   | { kind: 'reveal'; player: string; what: 'team' | 'role'; value: string; label: string }
-  | { kind: 'votes'; key: string; top: string | null; counts: { player: string; voters: string[] }[] }
+  | {
+      kind: 'votes';
+      key: string;
+      /** A player id, or the option text when `of` is "option". */
+      top: string | null;
+      of: 'player' | 'option';
+      /** Most picked first. `voters` is empty when the host hides names; `count` is always right. */
+      counts: { player: string; voters: string[]; count: number; label: string | null }[];
+    }
   | { kind: 'score'; players: string[]; points: number }
   | { kind: 'role_revealed'; player: string; role: { id: string; name: string } }
 );

@@ -1,7 +1,7 @@
 // The one thing this player can do right now: pick a player, vote, type, or tap ready.
 
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { radius, space, type Prompt, type RoomPlayer } from '@/shared';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -37,18 +37,52 @@ export function PromptPanel({ prompt, players }: { prompt: Prompt; players: Room
           onPress={() => send('ready')}
         />
       )}
-      {(prompt.type === 'choose_player' || prompt.type === 'vote') && (
+      {prompt.type === 'vote' && prompt.optionLabels && <AnswerPicker prompt={prompt} disabled={busy} onPick={send} />}
+      {(prompt.type === 'choose_player' || prompt.type === 'vote') && !prompt.optionLabels && (
         <PlayerPicker prompt={prompt} players={players} disabled={busy} onPick={send} />
       )}
       {prompt.type === 'choose_option' && (
         <View style={styles.options}>
           {prompt.options.map((o) => (
-            <Button key={o} label={o} variant={prompt.submitted === o ? 'accent' : 'secondary'} onPress={() => send(o)} />
+            <Button
+              key={o}
+              label={o}
+              variant={prompt.submitted === o ? 'accent' : 'secondary'}
+              disabled={busy || prompt.submitted !== null}
+              onPress={() => send(o)}
+            />
           ))}
         </View>
       )}
       {prompt.type === 'text' && <TextAnswer prompt={prompt} busy={busy} onSubmit={send} />}
     </View>
+  );
+}
+
+/** Anonymous answers to vote on: the text only, never the author. */
+function AnswerPicker({ prompt, disabled, onPick }: { prompt: Prompt; disabled: boolean; onPick(token: string): void }) {
+  const c = useColors();
+  return (
+    <ScrollView style={styles.answers} contentContainerStyle={styles.options} nestedScrollEnabled>
+      {prompt.options.map((token) => {
+        const chosen = prompt.submitted === token;
+        return (
+          <PressableScale
+            key={token}
+            haptics="select"
+            disabled={disabled}
+            onPress={() => onPick(token)}
+            accessibilityState={{ selected: chosen }}
+            style={[
+              styles.answer,
+              { borderColor: chosen ? c.accent : 'transparent', backgroundColor: c.surface, shadowColor: c.shadow },
+            ]}
+          >
+            <Text variant="lead">{prompt.optionLabels![token]}</Text>
+          </PressableScale>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -144,6 +178,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 2.5,
     minHeight: 56,
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
+  },
+  answers: { maxHeight: 280 },
+  answer: {
+    padding: space.md,
+    borderRadius: radius.md,
+    borderWidth: 2.5,
     shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },

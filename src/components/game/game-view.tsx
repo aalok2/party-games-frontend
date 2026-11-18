@@ -91,6 +91,7 @@ function Playing({ room, match }: { room: RoomView; match: MatchView }) {
                 <Text tone="muted">Watch quietly, no hints to the living.</Text>
               </View>
             )}
+            {match.content && <ContentCard content={match.content} />}
             <PlayerStrip room={room} match={match} />
             <Feed events={events} players={room.players} />
           </>
@@ -105,6 +106,23 @@ function Playing({ room, match }: { room: RoomView; match: MatchView }) {
         )}
       </View>
     </View>
+  );
+}
+
+/** The round's prompt or question, big, for everyone. The last field is the text; any before it are small labels. */
+function ContentCard({ content }: { content: NonNullable<MatchView['content']> }) {
+  const c = useColors();
+  const text = content[content.length - 1]!;
+  const labels = content.slice(0, -1);
+  return (
+    <Animated.View entering={FadeIn.duration(240).easing(easeOut)} style={[styles.qcard, { backgroundColor: c.surface, shadowColor: c.shadow }]}>
+      {labels.length > 0 && (
+        <Text variant="label" tone="accent">
+          {labels.map((l) => l.text).join(' · ')}
+        </Text>
+      )}
+      <Text variant="title">{text.text}</Text>
+    </Animated.View>
   );
 }
 
@@ -125,7 +143,7 @@ function PlayerStrip({ room, match }: { room: RoomView; match: MatchView }) {
             <Text variant="caption" tone={mp.alive ? 'fg' : 'faint'} numberOfLines={1} style={styles.chipName}>
               {p.name}
             </Text>
-            {match.totalRounds ? (
+            {match.scored ? (
               <Text variant="caption" tone="muted" numeric>
                 {mp.score}
               </Text>
@@ -169,6 +187,15 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: space.lg, paddingTop: space.md, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
   headerRow: { flexDirection: 'row', alignItems: 'flex-end' },
   body: { padding: space.lg, gap: space.lg, width: '100%', maxWidth: 520, alignSelf: 'center' },
+  qcard: {
+    borderRadius: 18,
+    padding: space.lg,
+    gap: 6,
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
+  },
   banner: { borderRadius: 14, padding: space.lg, gap: 2 },
   strip: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   chip: { alignItems: 'center', width: 56, gap: 4 },

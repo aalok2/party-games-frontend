@@ -10,6 +10,7 @@ const announce: Record<string, (player: string, value: string) => string> = {
   guess_right: (p, v) => `${p} guessed it: “${v}”. Round stolen.`,
   guess_wrong: (p, v) => `${p} guessed “${v}”. Wrong.`,
   word_was: (_p, v) => `The word was “${v}”.`,
+  answer_was: (_p, v) => `The answer: ${v}.`,
 };
 
 /** One line describing a feed event, or null for events a client shows its own way. */
@@ -26,6 +27,7 @@ export function describeEvent(e: FeedEvent, nameOf: (id: string) => string): str
     case 'reveal':
       return `${nameOf(e.player)} is ${e.what === 'team' ? 'on the ' : ''}${e.label}${e.what === 'team' ? ' side' : ''}.`;
     case 'votes':
+      if (e.of === 'option') return e.top ? `Most said “${e.top}”.` : 'Split down the middle.';
       return e.top ? `The vote landed on ${nameOf(e.top)}.` : 'The vote was split.';
     case 'score':
       return `${e.players.map(nameOf).join(', ')} +${e.points}`;

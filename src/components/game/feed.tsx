@@ -75,16 +75,18 @@ function FeedItem({
 
 function VoteBreakdown({ event, nameOf }: { event: Extract<FeedEvent, { kind: 'votes' }>; nameOf(id: string): string }) {
   const c = useColors();
-  const total = event.counts.reduce((n, x) => n + x.voters.length, 0) || 1;
+  const total = event.counts.reduce((n, x) => n + x.count, 0) || 1;
   return (
     <View style={[styles.votes, { borderColor: c.line }]}>
       <Text variant="strong">{describeEvent(event, nameOf)}</Text>
       {event.counts.map((row) => (
         <View key={row.player} style={styles.voteRow}>
           <View style={styles.voteHead}>
-            <Text variant="caption">{nameOf(row.player)}</Text>
+            <Text variant="caption" style={{ flexShrink: 1 }}>
+              {event.of === 'option' ? row.player : row.label ? `${nameOf(row.player)}: “${row.label}”` : nameOf(row.player)}
+            </Text>
             <Text variant="caption" tone="muted">
-              {row.voters.map(nameOf).join(', ')}
+              {row.voters.length > 0 ? row.voters.map(nameOf).join(', ') : row.count}
             </Text>
           </View>
           <View style={[styles.barTrack, { backgroundColor: c.raised }]}>
@@ -92,7 +94,7 @@ function VoteBreakdown({ event, nameOf }: { event: Extract<FeedEvent, { kind: 'v
               style={[
                 styles.bar,
                 {
-                  width: `${(row.voters.length / total) * 100}%`,
+                  width: `${(row.count / total) * 100}%`,
                   backgroundColor: row.player === event.top ? c.accent : c.faint,
                 },
               ]}

@@ -19,7 +19,7 @@ export function GameCard({ game, selected, disabled, onPress }: { game: GameSumm
       accessibilityLabel={game.name}
       accessibilityState={{ selected, disabled: !!disabled }}
     >
-      <Card radiusSize="xl" style={[styles.card, selected && { borderWidth: 2.5, borderColor: c.accent }]}>
+      <Card radiusSize="xl" style={[styles.card, selected && { borderWidth: 2.5, borderColor: c.accent, borderTopColor: c.accent }]}>
         <ImageBackground source={gameArt(game.id, scheme)} resizeMode="cover" style={styles.art}>
           <Motif id={game.id} />
         </ImageBackground>
